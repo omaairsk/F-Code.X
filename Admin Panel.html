@@ -326,7 +326,7 @@
             const code = document.getElementById('access-code').value;
             playSound('click');
             
-            // NOTE: This code 'admin@041500' is just client-side security (weak).
+            // NOTE: This code is client-side security.
             if (code === 'admin@041500') {
                 // Success
                 document.getElementById('login-screen').style.display = 'none';
