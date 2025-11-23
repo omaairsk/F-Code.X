@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F - CODE . X // ADMIN TERMINAL</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --secondary: #7000ff;
+            --danger: #ff0055;
+            --success: #00ff9d;
+            --bg-dark: #050505;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Space Grotesk', sans-serif;
+            overflow: hidden; /* App-like feel */
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Grid Background */
+        .cyber-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 242, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 242, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Glassmorphism */
+        .glass-panel {
+            background: rgba(10, 10, 10, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        /* Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #000; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        /* Animations */
+        @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+        .scanline::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, rgba(0, 242, 255, 0.1), transparent);
+            animation: scanline 4s linear infinite;
+            pointer-events: none;
+        }
+
+        .status-badge {
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+
+    <!-- Background Grid -->
+    <div class="cyber-grid"></div>
+
+    <!-- AUDIO SYSTEM -->
+    <script>
+        const playSound = (type) => {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'hover') {
+                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+            } else if (type === 'click') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'alert') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(150, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+            }
+        };
+    </script>
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="fixed inset-0 z-50 bg-black flex items-center justify-center">
+        <div class="w-full max-w-md p-8 glass-panel relative overflow-hidden text-center border border-cyan-900">
+            <div class="absolute top-0 left-0 w-full h-1 bg-cyan-500 shadow-[0_0_10px_#00f2ff]"></div>
+            <h1 class="text-3xl font-bold font-mono mb-2 tracking-widest text-cyan-400">RESTRICTED ACCESS</h1>
+            <p class="text-xs text-gray-500 mb-8 font-mono">SECTOR 7G // ADMIN AUTHENTICATION</p>
+            
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div class="relative">
+                    <input type="password" id="access-code" class="w-full bg-black/50 border border-gray-700 text-center text-xl p-4 text-white focus:border-cyan-400 focus:outline-none font-mono tracking-[0.5em]" placeholder="XXXXX" autofocus>
+                </div>
+                <button type="submit" class="w-full bg-cyan-900/30 border border-cyan-500 text-cyan-400 py-3 font-mono hover:bg-cyan-500 hover:text-black transition-all duration-200">
+                    [ AUTHENTICATE ]
+                </button>
+            </form>
+            <p id="login-error" class="text-red-500 text-xs font-mono mt-4 hidden">>> ACCESS DENIED. INVALID CREDENTIALS.</p>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD (Hidden by default) -->
+    <div id="dashboard" class="hidden flex-1 flex overflow-hidden scanline">
+        
+        <!-- Sidebar -->
+        <aside class="w-20 md:w-64 glass-panel border-r border-gray-800 flex flex-col z-10">
+            <div class="p-6 border-b border-gray-800 flex items-center gap-3">
+                <div class="w-3 h-3 bg-cyan-500 rounded-full animate-pulse shadow-[0_0_10px_#00f2ff]"></div>
+                <span class="hidden md:block font-bold font-mono tracking-widest text-lg">F-ADMIN</span>
+            </div>
+            
+            <nav class="flex-1 p-4 space-y-2">
+                <button class="w-full text-left p-3 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 flex items-center gap-3 transition-all hover:bg-cyan-500/20" onmousedown="playSound('click')">
+                    <i data-lucide="inbox" class="w-5 h-5"></i>
+                    <span class="hidden md:block font-mono text-sm">INBOX</span>
+                </button>
+                <button class="w-full text-left p-3 rounded text-gray-500 hover:text-white flex items-center gap-3 transition-colors" onmousedown="playSound('click')">
+                    <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+                    <span class="hidden md:block font-mono text-sm">ANALYTICS</span>
+                </button>
+                <button class="w-full text-left p-3 rounded text-gray-500 hover:text-white flex items-center gap-3 transition-colors" onmousedown="playSound('click')">
+                    <i data-lucide="shield" class="w-5 h-5"></i>
+                    <span class="hidden md:block font-mono text-sm">SECURITY</span>
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-gray-800">
+                <button onclick="location.reload()" class="w-full text-left p-2 text-red-400 hover:text-red-300 flex items-center gap-3 text-xs font-mono" onmousedown="playSound('click')">
+                    <i data-lucide="power" class="w-4 h-4"></i>
+                    <span class="hidden md:block">TERMINATE SESSION</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col min-w-0 bg-black/40">
+            <!-- Header -->
+            <header class="h-16 border-b border-gray-800 flex justify-between items-center px-8 bg-black/20 backdrop-blur-sm">
+                <h2 class="text-xl font-mono text-white flex items-center gap-2">
+                    <i data-lucide="radio" class="text-cyan-500 w-5 h-5"></i>
+                    INCOMING TRANSMISSIONS
+                </h2>
+                <div class="flex items-center gap-4">
+                    <span class="text-xs font-mono text-gray-500" id="clock">00:00:00</span>
+                    <div class="w-8 h-8 rounded bg-gradient-to-tr from-cyan-500 to-purple-500"></div>
+                </div>
+            </header>
+
+            <!-- Message List Container -->
+            <div class="flex-1 overflow-auto custom-scroll p-8">
+                <div id="loading-indicator" class="text-center font-mono text-cyan-500 mt-20 animate-pulse">
+                    [ ESTABLISHING UPLINK... ]
+                </div>
+                
+                <!-- Stats Row -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="glass-panel p-6 border-l-2 border-cyan-500">
+                        <div class="text-gray-400 text-xs font-mono mb-1">TOTAL PACKETS</div>
+                        <div class="text-3xl font-bold text-white" id="stat-total">0</div>
+                    </div>
+                    <div class="glass-panel p-6 border-l-2 border-purple-500">
+                        <div class="text-gray-400 text-xs font-mono mb-1">AWAITING REPLY</div>
+                        <div class="text-3xl font-bold text-purple-400" id="stat-pending">0</div>
+                    </div>
+                    <div class="glass-panel p-6 border-l-2 border-green-500">
+                        <div class="text-gray-400 text-xs font-mono mb-1">SYSTEM STATUS</div>
+                        <div class="text-xl font-bold text-green-400">ONLINE</div>
+                    </div>
+                </div>
+
+                <!-- Messages Grid -->
+                <div id="messages-container" class="grid grid-cols-1 gap-4">
+                    <!-- Messages will be injected here via JS -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Reply Modal -->
+    <div id="reply-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center">
+        <div class="glass-panel w-full max-w-2xl p-8 border border-cyan-500/50 relative">
+            <button onclick="closeReplyModal()" class="absolute top-4 right-4 text-gray-500 hover:text-white" onmousedown="playSound('click')">
+                <i data-lucide="x"></i>
+            </button>
+            
+            <h3 class="text-xl font-bold font-mono text-cyan-400 mb-6 flex items-center gap-2">
+                <i data-lucide="send"></i> COMPOSE RESPONSE
+            </h3>
+            
+            <div class="space-y-4 font-mono text-sm">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-500 text-xs mb-1">TARGET ID</label>
+                        <input type="text" id="reply-name" readonly class="w-full bg-black/50 border border-gray-700 p-2 text-gray-300">
+                    </div>
+                    <div>
+                        <label class="block text-gray-500 text-xs mb-1">TARGET FREQUENCY</label>
+                        <input type="text" id="reply-email" readonly class="w-full bg-black/50 border border-gray-700 p-2 text-gray-300">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-gray-500 text-xs mb-1">ORIGINAL PACKET</label>
+                    <div id="reply-original-msg" class="w-full bg-black/30 border border-gray-800 p-3 text-gray-400 italic text-xs h-20 overflow-y-auto"></div>
+                </div>
+
+                <div>
+                    <label class="block text-cyan-400 text-xs mb-1">RESPONSE DATA</label>
+                    <textarea id="reply-body" rows="6" class="w-full bg-black/50 border border-cyan-900 p-3 text-white focus:border-cyan-400 focus:outline-none" placeholder="Enter transmission content..."></textarea>
+                </div>
+
+                <div class="flex gap-4 pt-2">
+                    <button onclick="sendReplyAction()" class="flex-1 bg-cyan-600/20 border border-cyan-500 text-cyan-400 py-3 font-bold hover:bg-cyan-500 hover:text-black transition-all" onmousedown="playSound('click')">
+                        [ TRANSMIT & MARK RESOLVED ]
+                    </button>
+                    <a id="mailto-link" href="#" class="flex-1 border border-gray-600 text-gray-400 py-3 font-bold hover:border-white hover:text-white transition-all text-center flex items-center justify-center gap-2" onclick="markAsReplied(currentReplyId)">
+                        <i data-lucide="external-link" class="w-4 h-4"></i> OPEN MAIL CLIENT
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase & Logic -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getAuth, signInAnonymously, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+        // 1. Initialize Firebase
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // 2. Auth Sequence (Silent)
+        async function initAuth() {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        }
+        initAuth();
+
+        // 3. Login Logic
+        window.handleLogin = (e) => {
+            e.preventDefault();
+            const code = document.getElementById('access-code').value;
+            playSound('click');
+            
+            if (code === 'admin') {
+                // Success
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('dashboard').classList.remove('hidden');
+                startDataListener(); // Start fetching data only after login
+            } else {
+                // Fail
+                playSound('alert');
+                document.getElementById('login-error').classList.remove('hidden');
+                document.getElementById('access-code').value = '';
+                document.getElementById('access-code').classList.add('border-red-500');
+            }
+        };
+
+        // 4. Data Fetching (Real-time)
+        let messages = [];
+
+        function startDataListener() {
+            const user = auth.currentUser;
+            if (!user) return; // Should be auth'd by now
+
+            // Read from the PUBLIC data path where index.html writes
+            const q = collection(db, 'artifacts', appId, 'public', 'data', 'contact_messages');
+
+            onSnapshot(q, (snapshot) => {
+                document.getElementById('loading-indicator').style.display = 'none';
+                
+                messages = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                // Client-side Sort (Newest First)
+                messages.sort((a, b) => {
+                    const tA = a.timestamp?.seconds || 0;
+                    const tB = b.timestamp?.seconds || 0;
+                    return tB - tA;
+                });
+
+                renderMessages();
+                updateStats();
+            }, (error) => {
+                console.error("Data Uplink Failed:", error);
+                document.getElementById('messages-container').innerHTML = `<div class="text-red-500 font-mono">ERROR: SIGNAL LOST. ${error.message}</div>`;
+            });
+        }
+
+        // 5. Render Logic
+        function renderMessages() {
+            const container = document.getElementById('messages-container');
+            container.innerHTML = '';
+
+            if (messages.length === 0) {
+                container.innerHTML = `<div class="text-gray-500 font-mono text-center py-10">NO DATA PACKETS DETECTED.</div>`;
+                return;
+            }
+
+            messages.forEach(msg => {
+                const isReplied = msg.status === 'replied';
+                const date = msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleString() : 'UNKNOWN TIME';
+                
+                const card = document.createElement('div');
+                card.className = `glass-panel p-6 border-l-4 transition-all hover:bg-white/5 ${isReplied ? 'border-gray-600 opacity-75' : 'border-cyan-500'}`;
+                
+                card.innerHTML = `
+                    <div class="flex flex-col md:flex-row justify-between items-start gap-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="font-bold text-lg text-white font-mono">${escapeHtml(msg.name)}</span>
+                                <span class="status-badge ${isReplied ? 'bg-gray-800 text-gray-400' : 'bg-cyan-900 text-cyan-300 animate-pulse'}">
+                                    ${isReplied ? 'RESOLVED' : 'NEW PACKET'}
+                                </span>
+                            </div>
+                            <div class="text-xs text-gray-500 font-mono mb-4 flex items-center gap-2">
+                                <i data-lucide="mail" class="w-3 h-3"></i> ${escapeHtml(msg.email)}
+                                <span class="text-gray-700">|</span>
+                                <i data-lucide="clock" class="w-3 h-3"></i> ${date}
+                            </div>
+                            <div class="bg-black/30 p-4 rounded border border-gray-800 font-mono text-sm text-gray-300 leading-relaxed">
+                                ${escapeHtml(msg.message)}
+                            </div>
+                            ${msg.replyNote ? `<div class="mt-2 text-xs text-cyan-600 font-mono">>> ADMIN NOTE: ${escapeHtml(msg.replyNote)}</div>` : ''}
+                        </div>
+                        <div class="flex flex-row md:flex-col gap-2 min-w-[140px]">
+                            <button onclick="window.openReply('${msg.id}')" class="flex-1 bg-cyan-600/10 border border-cyan-500/50 text-cyan-400 py-2 px-4 text-xs font-mono hover:bg-cyan-500 hover:text-black transition-colors flex items-center justify-center gap-2" onmousedown="playSound('click')">
+                                <i data-lucide="reply" class="w-3 h-3"></i> REPLY
+                            </button>
+                            <button onclick="window.deleteMessage('${msg.id}')" class="flex-1 bg-red-600/10 border border-red-500/50 text-red-400 py-2 px-4 text-xs font-mono hover:bg-red-500 hover:text-black transition-colors flex items-center justify-center gap-2" onmousedown="playSound('alert')">
+                                <i data-lucide="trash" class="w-3 h-3"></i> PURGE
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function updateStats() {
+            document.getElementById('stat-total').innerText = messages.length;
+            document.getElementById('stat-pending').innerText = messages.filter(m => m.status !== 'replied').length;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // 6. Actions
+        window.currentReplyId = null;
+
+        window.openReply = (id) => {
+            const msg = messages.find(m => m.id === id);
+            if (!msg) return;
+
+            window.currentReplyId = id;
+            document.getElementById('reply-name').value = msg.name;
+            document.getElementById('reply-email').value = msg.email;
+            document.getElementById('reply-original-msg').innerText = msg.message;
+            document.getElementById('reply-body').value = `Greetings ${msg.name},\n\nReceived your transmission regarding: "${msg.message.substring(0, 20)}..."\n\n[ YOUR RESPONSE HERE ]\n\n// F - Code . X Team`;
+            
+            // Setup Mailto Link
+            const subject = encodeURIComponent(`RE: F - Code . X Transmission [ID: ${id.substring(0,6)}]`);
+            const body = encodeURIComponent(`Greetings ${msg.name},\n\nWe received your message.\n\n> ${msg.message}\n\n[Write your reply here]`);
+            document.getElementById('mailto-link').href = `mailto:${msg.email}?subject=${subject}&body=${body}`;
+
+            document.getElementById('reply-modal').classList.remove('hidden');
+            document.getElementById('reply-modal').classList.add('flex');
+            playSound('click');
+        };
+
+        window.closeReplyModal = () => {
+            document.getElementById('reply-modal').classList.add('hidden');
+            document.getElementById('reply-modal').classList.remove('flex');
+        };
+
+        // Logic for the internal "Transmit" button
+        window.sendReplyAction = async () => {
+            if (!window.currentReplyId) return;
+            const replyText = document.getElementById('reply-body').value;
+            
+            try {
+                // Update Firestore doc status
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'contact_messages', window.currentReplyId), {
+                    status: 'replied',
+                    replyNote: 'Replied manually via Admin Terminal', // Internal note
+                    repliedAt: serverTimestamp()
+                });
+                
+                // Simulate "Sent"
+                alert('Response Logged in System. (Note: This button logs the action. Use "Open Mail Client" to actually send the email).');
+                
+                closeReplyModal();
+                playSound('success');
+            } catch (err) {
+                console.error(err);
+                alert('Error updating database.');
+            }
+        };
+
+        // Standalone mark as replied (for mailto link)
+        window.markAsReplied = async (id) => {
+            if (!id) return;
+            try {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'contact_messages', id), {
+                    status: 'replied',
+                    replyNote: 'Replied via External Mail Client',
+                    repliedAt: serverTimestamp()
+                });
+            } catch(e) { console.log(e); }
+        };
+
+        window.deleteMessage = async (id) => {
+            if(confirm('CONFIRM DELETION: Purge this data packet permanently?')) {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'contact_messages', id));
+                    playSound('alert');
+                } catch (err) {
+                    alert('Error deleting: ' + err.message);
+                }
+            }
+        };
+
+        // Clock
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString('en-US', { hour12: false });
+        }, 1000);
+
+    </script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
