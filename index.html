@@ -60,7 +60,6 @@
             width: 100%;
             height: 100vh;
             z-index: -1;
-            /* opacity: 0.6;  Removed to let the new lighting shine */
         }
 
         /* Glassmorphism */
@@ -134,13 +133,66 @@
         .modal-open {
             overflow: hidden;
         }
+
+        /* --- ADMIN PANEL STYLES (INTEGRATED) --- */
+        .admin-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: #050505;
+            z-index: 200; /* Above everything */
+            display: none; /* Hidden by default */
+            overflow: hidden;
+        }
+        
+        .admin-visible {
+            display: flex;
+        }
+
+        .cyber-grid {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 242, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 242, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .scanline::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, rgba(0, 242, 255, 0.05), transparent);
+            animation: scanline 4s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+
+        .status-badge {
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
     </style>
 </head>
 <body class="antialiased selection:bg-cyan-500 selection:text-black">
 
     <!-- Loading Screen -->
     <div id="loader">
-        <div class="font-mono text-cyan-400 text-xl animate-pulse">
+        <div class="font-mono text-cyan-400 text-xl animate-pulse text-center">
             INITIALIZING F - CODE . X SYSTEM...
         </div>
     </div>
@@ -159,7 +211,8 @@
                 <a href="#home" class="hover:text-cyan-400 transition-colors">/HOME</a>
                 <a href="#expertise" class="hover:text-cyan-400 transition-colors">/EXPERTISE</a>
                 <a href="#work" class="hover:text-cyan-400 transition-colors">/WORK</a>
-                <a href="https://omaairsk.github.io/F-Code.X/Admin%20Panel.html" target="_blank" class="text-gray-500 hover:text-red-400 transition-colors text-xs" title="Restricted Access">/ADMIN</a>
+                <!-- Integrated Admin Button -->
+                <button onclick="openAdminPanel()" class="text-gray-500 hover:text-red-400 transition-colors text-xs uppercase cursor-pointer tracking-widest" title="Restricted Access">/ADMIN PANEL</button>
                 <a href="#contact" class="text-cyan-400 border border-cyan-400 px-4 py-1 hover:bg-cyan-400 hover:text-black transition-all">INIT_CONTACT</a>
             </div>
 
@@ -175,7 +228,7 @@
                 <a href="#home" class="block hover:text-cyan-400">/HOME</a>
                 <a href="#expertise" class="block hover:text-cyan-400">/EXPERTISE</a>
                 <a href="#work" class="block hover:text-cyan-400">/WORK</a>
-                <a href="https://omaairsk.github.io/F-Code.X/Admin%20Panel.html" target="_blank" class="block text-gray-500 hover:text-red-400">/ADMIN PANEL</a>
+                <button onclick="openAdminPanel()" class="block text-gray-500 hover:text-red-400 text-left">/ADMIN PANEL</button>
                 <a href="#contact" class="block text-cyan-400">INIT_CONTACT</a>
             </div>
         </div>
@@ -188,7 +241,7 @@
         <section id="home" class="min-h-screen flex items-center justify-center px-6 relative overflow-hidden">
             <div class="max-w-7xl mx-auto w-full grid md:grid-cols-2 gap-12 items-center">
                 <div class="space-y-6 relative z-10">
-                    <!-- Updated Badge Text -->
+                    <!-- Badge Text -->
                     <div class="inline-block px-3 py-1 border border-cyan-500/30 rounded-full bg-cyan-500/10 backdrop-blur-sm">
                         <span class="text-xs font-mono text-cyan-300">● WELCOME TO OUR UNIVERSE</span>
                     </div>
@@ -274,7 +327,7 @@
             </div>
         </section>
 
-        <!-- Stats / Code Section -->
+        <!-- Stats Section -->
         <section class="py-20 border-y border-gray-800 bg-black/50 relative backdrop-blur-sm">
             <div class="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center font-mono">
                 <div>
@@ -353,92 +406,367 @@
 
     <!-- Legal Modal Overlay -->
     <div id="legal-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
-        <!-- Backdrop -->
         <div class="absolute inset-0 bg-black/90 backdrop-blur-md" onclick="closeLegal()"></div>
-        
-        <!-- Modal Content -->
         <div class="relative glass-strong p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto border border-cyan-500/30 shadow-[0_0_50px_rgba(0,242,255,0.1)] transform transition-all duration-300 scale-95 opacity-0" id="legal-content-box">
             <button onclick="closeLegal()" class="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors">
                 <i data-lucide="x"></i>
             </button>
-            
             <h2 id="modal-title" class="text-3xl font-bold mb-6 font-mono text-cyan-400 border-b border-gray-800 pb-4"></h2>
             <div id="modal-body" class="text-gray-300 space-y-4 font-mono text-sm leading-relaxed"></div>
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script>
-        // Initialize Icons
-        lucide.createIcons();
 
-        // --- AUDIO SYSTEM (Sound Effects) ---
+    <!-- ========================================== -->
+    <!--        INTEGRATED ADMIN INTERFACE          -->
+    <!-- ========================================== -->
+    <div id="admin-interface" class="admin-overlay flex-col text-white font-mono">
+        <div class="cyber-grid"></div>
+
+        <!-- 1. Admin Login Screen -->
+        <div id="admin-login" class="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+            <div class="w-full max-w-md p-8 glass-strong border border-cyan-900 relative overflow-hidden text-center">
+                <div class="absolute top-0 left-0 w-full h-1 bg-cyan-500 shadow-[0_0_10px_#00f2ff]"></div>
+                <button onclick="closeAdminPanel()" class="absolute top-4 right-4 text-gray-500 hover:text-white"><i data-lucide="x"></i></button>
+                
+                <h1 class="text-3xl font-bold mb-2 tracking-widest text-cyan-400">RESTRICTED ACCESS</h1>
+                <p class="text-xs text-gray-500 mb-8">SECTOR 7G // ADMIN AUTHENTICATION</p>
+                
+                <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                    <input type="password" id="admin-code" class="w-full bg-black/50 border border-gray-700 text-center text-xl p-4 text-white focus:border-cyan-400 focus:outline-none tracking-[0.5em]" placeholder="XXXXX" autofocus>
+                    <button type="submit" class="w-full bg-cyan-900/30 border border-cyan-500 text-cyan-400 py-3 hover:bg-cyan-500 hover:text-black transition-all">
+                        [ AUTHENTICATE ]
+                    </button>
+                </form>
+                <p id="login-error" class="text-red-500 text-xs mt-4 hidden">>> ACCESS DENIED.</p>
+            </div>
+        </div>
+
+        <!-- 2. Admin Dashboard (Hidden until login) -->
+        <div id="admin-dashboard" class="hidden flex-1 flex flex-col h-full relative z-10 scanline">
+            <!-- Admin Header -->
+            <header class="h-16 border-b border-gray-800 flex justify-between items-center px-6 bg-black/40 backdrop-blur-md">
+                <div class="flex items-center gap-3">
+                    <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                    <span class="font-bold tracking-widest text-lg">ADMIN :: TERMINAL</span>
+                </div>
+                <button onclick="closeAdminPanel()" class="text-xs border border-red-500/50 text-red-400 px-3 py-1 hover:bg-red-500 hover:text-black transition-colors">
+                    [ EXIT SYSTEM ]
+                </button>
+            </header>
+
+            <div class="flex flex-1 overflow-hidden">
+                <!-- Sidebar -->
+                <aside class="w-16 md:w-64 border-r border-gray-800 bg-black/20 flex flex-col pt-4">
+                    <nav class="space-y-1 px-2">
+                        <button class="w-full text-left p-3 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 flex items-center gap-3">
+                            <i data-lucide="inbox" class="w-5 h-5"></i>
+                            <span class="hidden md:block text-sm">INBOX</span>
+                        </button>
+                        <!-- Mock buttons -->
+                        <button class="w-full text-left p-3 rounded text-gray-500 hover:text-white flex items-center gap-3 transition-colors">
+                            <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+                            <span class="hidden md:block text-sm">ANALYTICS</span>
+                        </button>
+                    </nav>
+                </aside>
+
+                <!-- Messages Area -->
+                <main class="flex-1 flex flex-col min-w-0 bg-black/10 p-4 md:p-8 overflow-auto custom-scroll">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="p-6 border-l-2 border-cyan-500 bg-white/5">
+                            <div class="text-gray-400 text-xs mb-1">TOTAL PACKETS</div>
+                            <div class="text-3xl font-bold" id="stat-total">0</div>
+                        </div>
+                        <div class="p-6 border-l-2 border-purple-500 bg-white/5">
+                            <div class="text-gray-400 text-xs mb-1">PENDING</div>
+                            <div class="text-3xl font-bold text-purple-400" id="stat-pending">0</div>
+                        </div>
+                    </div>
+
+                    <div id="admin-msg-container" class="space-y-4">
+                        <div class="text-center text-gray-500 mt-10">[ WAITING FOR DATA STREAM... ]</div>
+                    </div>
+                </main>
+            </div>
+        </div>
+
+        <!-- 3. Admin Reply Modal -->
+        <div id="admin-reply-modal" class="absolute inset-0 z-[60] bg-black/90 backdrop-blur-sm hidden items-center justify-center p-4">
+            <div class="w-full max-w-2xl p-8 glass-strong border border-cyan-500/50 relative">
+                <button onclick="closeReplyModal()" class="absolute top-4 right-4 text-gray-500 hover:text-white"><i data-lucide="x"></i></button>
+                <h3 class="text-xl font-bold text-cyan-400 mb-6 flex items-center gap-2">
+                    <i data-lucide="send"></i> COMPOSE RESPONSE
+                </h3>
+                
+                <div class="space-y-4 text-sm">
+                    <input type="hidden" id="reply-id">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-500 text-xs mb-1">TARGET ID</label>
+                            <input type="text" id="reply-name" readonly class="w-full bg-black/50 border border-gray-700 p-2 text-gray-300">
+                        </div>
+                        <div>
+                            <label class="block text-gray-500 text-xs mb-1">TARGET FREQUENCY</label>
+                            <input type="text" id="reply-email" readonly class="w-full bg-black/50 border border-gray-700 p-2 text-gray-300">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-gray-500 text-xs mb-1">ORIGINAL PACKET</label>
+                        <div id="reply-original" class="w-full bg-black/30 border border-gray-800 p-3 text-gray-400 italic text-xs h-20 overflow-y-auto"></div>
+                    </div>
+                    <div class="flex gap-4 pt-2">
+                        <button onclick="markAsRepliedInternal()" class="flex-1 bg-cyan-600/20 border border-cyan-500 text-cyan-400 py-3 font-bold hover:bg-cyan-500 hover:text-black transition-all">
+                            [ MARK RESOLVED ]
+                        </button>
+                        <a id="admin-mailto" href="#" class="flex-1 border border-gray-600 text-gray-400 py-3 font-bold hover:border-white hover:text-white transition-all text-center flex items-center justify-center gap-2">
+                            <i data-lucide="external-link" class="w-4 h-4"></i> OPEN MAIL CLIENT
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getAuth, signInAnonymously, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, updateDoc, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+        // 1. Initialize Firebase
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // 2. Auth Sequence
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                console.log("System Authenticated");
+            } catch (error) {
+                console.error("Auth Failure:", error);
+            }
+        }
+        initAuth();
+
+        // 3. Audio & Voice System
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
         const playUiSound = () => {
-            // Resume context if suspended (browser policy)
             if (audioCtx.state === 'suspended') audioCtx.resume();
-
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
-            
-            // Create a "Sci-Fi Blip" sound
             oscillator.type = 'sine';
-            // Start frequency
             oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); 
-            // Drop pitch quickly
             oscillator.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
-            
-            // Envelope (Volume)
-            gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime); // Start quiet
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1); // Fade out
-            
-            // Connect
+            gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
             oscillator.connect(gainNode);
             gainNode.connect(audioCtx.destination);
-            
-            // Play
             oscillator.start();
             oscillator.stop(audioCtx.currentTime + 0.1);
         };
 
-        // Attach sound to all interactive elements
-        document.addEventListener('DOMContentLoaded', () => {
-            const interactiveElements = document.querySelectorAll('button, a, input, textarea');
-            interactiveElements.forEach(el => {
-                el.addEventListener('mousedown', playUiSound);
+        window.addEventListener('load', () => {
+            lucide.createIcons();
+            const loader = document.getElementById('loader');
+            const loaderText = loader.querySelector('div');
+
+            setTimeout(() => {
+                loaderText.innerHTML = "SYSTEM READY. <br/><span class='text-sm text-white/50 block mt-4'>[ CLICK TO ENTER UNIVERSE ]</span>";
+                loaderText.classList.remove('animate-pulse');
+                loader.style.cursor = "pointer";
+            }, 1500);
+
+            const activateSystem = () => {
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance("Website loaded, sir. Welcome to our universe.");
+                    utterance.rate = 0.9;
+                    utterance.pitch = 0.8;
+                    const voices = window.speechSynthesis.getVoices();
+                    const preferredVoice = voices.find(v => v.name.includes('Google US English') || v.name.includes('Samantha'));
+                    if (preferredVoice) utterance.voice = preferredVoice;
+                    window.speechSynthesis.speak(utterance);
+                }
+                loader.style.opacity = '0';
+                setTimeout(() => { loader.style.display = 'none'; }, 500);
+            };
+            loader.addEventListener('click', activateSystem, { once: true });
+
+            document.addEventListener('mousedown', (e) => {
+                if(e.target.closest('button') || e.target.closest('a')) playUiSound();
             });
         });
 
 
-        // --- LEGAL MODAL SYSTEM ---
-        const legalData = {
-            privacy: {
-                title: "PRIVACY_PROTOCOL_v1.0",
-                content: `
-                    <p class="text-cyan-200">// DATA_COLLECTION_INIT</p>
-                    <p>F - Code . X respects your digital footprint. We collect only the data you explicitly transmit via our communication modules (Name, Frequency/Email, Message Packets).</p>
+        // 4. Public Form Handling
+        const form = document.getElementById('contact-form');
+        const btn = document.getElementById('submit-btn');
+        const btnText = document.getElementById('btn-text');
+        const statusMsg = document.getElementById('status-msg');
+
+        if(form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const originalText = btnText.innerText;
+                btnText.innerText = "[ UPLOADING PACKET... ]";
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('email').value;
+                const message = document.getElementById('message').value;
+
+                try {
+                    if (!auth.currentUser) await initAuth();
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'contact_messages'), {
+                        name: name, email: email, message: message,
+                        timestamp: serverTimestamp(),
+                        status: 'new'
+                    });
                     
-                    <br><p class="text-cyan-200">// DATA_USAGE</p>
-                    <p>Captured data is utilized solely for establishing communication uplinks and project collaboration. We do not share, sell, or decrypt your personal identifiers for third-party entities.</p>
-                    
-                    <br><p class="text-cyan-200">// COOKIE_POLICY</p>
-                    <p>This system uses local storage primarily for performance optimization (3D asset caching) and session continuity.</p>
-                `
-            },
-            terms: {
-                title: "TERMS_OF_OPERATIONS",
-                content: `
-                    <p class="text-cyan-200">// SYSTEM_ACCESS</p>
-                    <p>By accessing F - Code . X, you agree to navigate our digital construct responsibly. Any attempt to inject malicious code or disrupt the 3D visualizer will result in an IP ban.</p>
-                    
-                    <br><p class="text-cyan-200">// INTELLECTUAL_PROPERTY</p>
-                    <p>All visual assets, code architectures, and "F-Code" branding are proprietary. Unauthorized replication of this digital environment is prohibited.</p>
-                    
-                    <br><p class="text-cyan-200">// LIABILITY_LIMITATION</p>
-                    <p>F - Code . X is not liable for GPU overheating caused by excessive admiration of our particle systems.</p>
-                `
+                    btnText.innerText = "[ TRANSMISSION COMPLETE ]";
+                    statusMsg.innerHTML = '<span class="text-green-400">>> Data packet received successfully.</span>';
+                    form.reset();
+                    setTimeout(() => { btnText.innerText = originalText; btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed'); statusMsg.innerHTML = ''; }, 3000);
+                } catch (error) {
+                    console.error("Error:", error);
+                    btnText.innerText = "[ FAILED ]";
+                    setTimeout(() => { btnText.innerText = originalText; btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed'); }, 3000);
+                }
+            });
+        }
+
+
+        // 5. Admin Panel Logic
+        let adminListenerUnsubscribe = null;
+
+        window.openAdminPanel = () => {
+            document.getElementById('admin-interface').classList.add('admin-visible');
+            document.body.style.overflow = 'hidden';
+        };
+
+        window.closeAdminPanel = () => {
+            document.getElementById('admin-interface').classList.remove('admin-visible');
+            document.body.style.overflow = '';
+        };
+
+        window.handleAdminLogin = (e) => {
+            e.preventDefault();
+            const code = document.getElementById('admin-code').value;
+            if (code === 'admin') {
+                document.getElementById('admin-login').classList.add('hidden');
+                document.getElementById('admin-dashboard').classList.remove('hidden');
+                startAdminDataStream();
+            } else {
+                document.getElementById('login-error').classList.remove('hidden');
             }
+        };
+
+        function startAdminDataStream() {
+            if (adminListenerUnsubscribe) return;
+            const q = collection(db, 'artifacts', appId, 'public', 'data', 'contact_messages');
+            adminListenerUnsubscribe = onSnapshot(q, (snapshot) => {
+                const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                    .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+                updateAdminUI(msgs);
+            });
+        }
+
+        function updateAdminUI(msgs) {
+            document.getElementById('stat-total').innerText = msgs.length;
+            document.getElementById('stat-pending').innerText = msgs.filter(m => m.status !== 'replied').length;
+
+            const container = document.getElementById('admin-msg-container');
+            container.innerHTML = '';
+
+            if (msgs.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 mt-10">NO MESSAGES FOUND</div>';
+                return;
+            }
+
+            msgs.forEach(msg => {
+                const isReplied = msg.status === 'replied';
+                const date = msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleString() : 'Processing...';
+                
+                const card = document.createElement('div');
+                card.className = `p-6 border-l-4 transition-all hover:bg-white/5 mb-4 ${isReplied ? 'border-gray-600 opacity-60 bg-black/40' : 'border-cyan-500 bg-white/5'}`;
+                card.innerHTML = `
+                    <div class="flex flex-col md:flex-row justify-between items-start gap-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="font-bold text-lg text-white font-mono">${escapeHtml(msg.name)}</span>
+                                <span class="status-badge ${isReplied ? 'bg-gray-800 text-gray-400' : 'bg-cyan-900 text-cyan-300 animate-pulse'}">
+                                    ${isReplied ? 'RESOLVED' : 'NEW'}
+                                </span>
+                            </div>
+                            <div class="text-xs text-gray-500 mb-2 flex gap-4">
+                                <span>${escapeHtml(msg.email)}</span>
+                                <span>${date}</span>
+                            </div>
+                            <div class="text-gray-300 text-sm leading-relaxed">${escapeHtml(msg.message)}</div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="openReplyModal('${msg.id}', '${escapeHtml(msg.name)}', '${escapeHtml(msg.email)}', '${escapeHtml(msg.message).replace(/'/g, "\\'")}')" class="bg-cyan-900/40 text-cyan-400 px-4 py-2 text-xs border border-cyan-500/30 hover:bg-cyan-500 hover:text-black transition-colors">REPLY</button>
+                            <button onclick="deleteMessage('${msg.id}')" class="bg-red-900/40 text-red-400 px-4 py-2 text-xs border border-red-500/30 hover:bg-red-500 hover:text-black transition-colors">DEL</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function escapeHtml(text) { return text ? text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''; }
+
+        window.openReplyModal = (id, name, email, msg) => {
+            document.getElementById('reply-id').value = id;
+            document.getElementById('reply-name').value = name;
+            document.getElementById('reply-email').value = email;
+            document.getElementById('reply-original').innerText = msg;
+            
+            const subject = encodeURIComponent(`RE: F-Code.X Transmission`);
+            const body = encodeURIComponent(`Greetings ${name},\n\nRegarding: "${msg}"\n\n[Your Reply]`);
+            document.getElementById('admin-mailto').href = `mailto:${email}?subject=${subject}&body=${body}`;
+            document.getElementById('admin-mailto').onclick = () => markAsRepliedInternal(); 
+
+            document.getElementById('admin-reply-modal').classList.remove('hidden');
+            document.getElementById('admin-reply-modal').classList.add('flex');
+        };
+
+        window.closeReplyModal = () => {
+            document.getElementById('admin-reply-modal').classList.add('hidden');
+            document.getElementById('admin-reply-modal').classList.remove('flex');
+        };
+
+        window.markAsRepliedInternal = async () => {
+            const id = document.getElementById('reply-id').value;
+            if(!id) return;
+            try {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'contact_messages', id), { status: 'replied' });
+                closeReplyModal();
+            } catch(e) { console.error(e); }
+        };
+
+        window.deleteMessage = async (id) => {
+            if(confirm('Permanently delete this packet?')) {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'contact_messages', id));
+                } catch(e) { console.error(e); }
+            }
+        };
+
+        // 6. Legal Modal
+        const legalData = {
+            privacy: { title: "PRIVACY_PROTOCOL_v1.0", content: "<p class='text-cyan-200'>// DATA_COLLECTION_INIT</p><p>F - Code . X respects your digital footprint. We collect only the data you explicitly transmit via our communication modules.</p>" },
+            terms: { title: "TERMS_OF_OPERATIONS", content: "<p class='text-cyan-200'>// SYSTEM_ACCESS</p><p>By accessing F - Code . X, you agree to navigate our digital construct responsibly.</p>" }
         };
 
         const modal = document.getElementById('legal-modal');
@@ -449,273 +777,101 @@
         window.openLegal = (type) => {
             const data = legalData[type];
             if(!data) return;
-
             modalTitle.innerText = data.title;
             modalBody.innerHTML = data.content;
-            
             modal.classList.remove('hidden');
-            // Small delay for animation
-            setTimeout(() => {
-                contentBox.classList.remove('scale-95', 'opacity-0');
-                contentBox.classList.add('scale-100', 'opacity-100');
-            }, 10);
-            
-            playUiSound(); // Play sound on open
+            setTimeout(() => { contentBox.classList.remove('scale-95', 'opacity-0'); contentBox.classList.add('scale-100', 'opacity-100'); }, 10);
         };
 
         window.closeLegal = () => {
             contentBox.classList.remove('scale-100', 'opacity-100');
             contentBox.classList.add('scale-95', 'opacity-0');
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
-            
-            playUiSound(); // Play sound on close
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
         };
 
-        // Loader & System Voice Interaction
-        window.addEventListener('load', () => {
-            const loader = document.getElementById('loader');
-            const loaderText = loader.querySelector('div');
-
-            // Browser audio policies require user interaction to play sound.
-            // We wait a moment, then prompt the user to click to start the experience.
-            setTimeout(() => {
-                loaderText.innerHTML = "SYSTEM READY. <br/><span class='text-sm text-white/50 block mt-4'>[ CLICK TO ENTER UNIVERSE ]</span>";
-                loaderText.classList.remove('animate-pulse'); // Stop the loading pulse
-                loader.style.cursor = "pointer"; // Show pointer cursor
-                
-                // Add a subtle hover effect to the text
-                loaderText.classList.add('transition-transform', 'duration-300', 'hover:scale-105');
-            }, 1500);
-
-            const activateSystem = () => {
-                // 1. Play "Jarvis-like" Speech
-                if ('speechSynthesis' in window) {
-                    // Updated Speech Text
-                    const utterance = new SpeechSynthesisUtterance("Website loaded, sir. Welcome to our universe.");
-                    utterance.rate = 0.9;  // Slightly slower and more deliberate
-                    utterance.pitch = 0.8; // Slightly deeper tone
-                    utterance.volume = 1.0;
-                    
-                    // Try to select a better voice if available (browser dependent)
-                    const voices = window.speechSynthesis.getVoices();
-                    const preferredVoice = voices.find(v => v.name.includes('Google US English') || v.name.includes('Samantha'));
-                    if (preferredVoice) utterance.voice = preferredVoice;
-
-                    window.speechSynthesis.speak(utterance);
-                }
-
-                // 2. Fade Out Loader
-                loader.style.opacity = '0';
-                setTimeout(() => {
-                    loader.style.display = 'none';
-                }, 500);
-            };
-
-            // Trigger system activation on click
-            loader.addEventListener('click', activateSystem, { once: true });
-        });
-
-        // --- ENHANCED 3D ANIMATION ENGINE ---
+        // 7. 3D Background
         const initThreeJS = () => {
             const container = document.getElementById('canvas-container');
-            
-            // 1. SCENE & FOG
             const scene = new THREE.Scene();
-            // Dark fog for infinite depth illusion
             scene.fog = new THREE.FogExp2(0x020202, 0.002); 
 
-            // 2. CAMERA
             const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.z = 25;
             camera.position.y = 2;
 
-            // 3. RENDERER (With Shadow Map enabled)
             const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
             renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             container.appendChild(renderer.domElement);
 
-            // 4. LIGHTING (Cinematic Setup)
-            // Ambient light for base visibility
             const ambientLight = new THREE.AmbientLight(0x222222);
             scene.add(ambientLight);
 
-            // Main Key Light (Cyan/Blue)
             const light1 = new THREE.PointLight(0x00f2ff, 2, 100);
             light1.position.set(10, 10, 10);
             light1.castShadow = true;
             scene.add(light1);
 
-            // Rim Light (Purple)
             const light2 = new THREE.PointLight(0x7000ff, 2, 100);
             light2.position.set(-10, -10, 10);
             scene.add(light2);
 
-            // Bottom Fill Light (Pinkish)
-            const light3 = new THREE.PointLight(0xff00aa, 1, 50);
-            light3.position.set(0, -10, 5);
-            scene.add(light3);
-
-            // 5. MATERIALS & OBJECTS
-            // Group to hold the "Cyber Core"
             const coreGroup = new THREE.Group();
             scene.add(coreGroup);
 
-            // A. Central Metallic Torus Knot (The "Brain")
             const torusKnotGeo = new THREE.TorusKnotGeometry(3.5, 1, 100, 16);
-            const metalMaterial = new THREE.MeshStandardMaterial({
-                color: 0x111111,
-                metalness: 0.9,
-                roughness: 0.2,
-                emissive: 0x001133,
-                emissiveIntensity: 0.2,
-                wireframe: false
-            });
+            const metalMaterial = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9, roughness: 0.2, emissive: 0x001133, emissiveIntensity: 0.2 });
             const torusKnot = new THREE.Mesh(torusKnotGeo, metalMaterial);
             torusKnot.castShadow = true;
-            torusKnot.receiveShadow = true;
             coreGroup.add(torusKnot);
 
-            // B. Spinning Wireframe Rings (Data Streams)
             const ringGeo = new THREE.TorusGeometry(8, 0.05, 16, 100);
             const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f2ff, transparent: true, opacity: 0.3 });
-            
-            const ring1 = new THREE.Mesh(ringGeo, ringMat);
-            const ring2 = new THREE.Mesh(ringGeo, ringMat);
-            const ring3 = new THREE.Mesh(ringGeo, ringMat);
+            const ring1 = new THREE.Mesh(ringGeo, ringMat); ring1.rotation.x = Math.PI / 2;
+            const ring2 = new THREE.Mesh(ringGeo, ringMat); ring2.rotation.y = Math.PI / 4;
+            coreGroup.add(ring1); coreGroup.add(ring2);
 
-            ring1.rotation.x = Math.PI / 2;
-            ring2.rotation.y = Math.PI / 4;
-            
-            coreGroup.add(ring1);
-            coreGroup.add(ring2);
-            coreGroup.add(ring3);
-
-            // C. Outer Geodesic Sphere (The Network)
-            const outerGeo = new THREE.IcosahedronGeometry(12, 1);
-            const outerMat = new THREE.MeshStandardMaterial({
-                color: 0x333333,
-                wireframe: true,
-                transparent: true,
-                opacity: 0.1,
-                roughness: 0.5,
-                metalness: 0.8
-            });
-            const outerSphere = new THREE.Mesh(outerGeo, outerMat);
-            coreGroup.add(outerSphere);
-
-            // 6. FLOATING PARTICLES (Starfield/Data bits)
             const particlesGeometry = new THREE.BufferGeometry();
             const particlesCount = 1500;
             const posArray = new Float32Array(particlesCount * 3);
-            
-            for(let i = 0; i < particlesCount * 3; i++) {
-                posArray[i] = (Math.random() - 0.5) * 100; // Wider spread
-            }
-            
+            for(let i = 0; i < particlesCount * 3; i++) posArray[i] = (Math.random() - 0.5) * 100;
             particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
             
-            // Create a soft glow texture for particles
             const getTexture = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = 32;
-                canvas.height = 32;
+                const canvas = document.createElement('canvas'); canvas.width = 32; canvas.height = 32;
                 const ctx = canvas.getContext('2d');
                 const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
-                gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-                gradient.addColorStop(0.2, 'rgba(0, 242, 255, 1)');
-                gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
-                gradient.addColorStop(1, 'rgba(0,0,0,0)');
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, 32, 32);
-                const texture = new THREE.Texture(canvas);
-                texture.needsUpdate = true;
-                return texture;
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 1)'); gradient.addColorStop(0.2, 'rgba(0, 242, 255, 1)'); gradient.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = gradient; ctx.fillRect(0, 0, 32, 32);
+                const texture = new THREE.Texture(canvas); texture.needsUpdate = true; return texture;
             };
 
-            const particlesMaterial = new THREE.PointsMaterial({
-                size: 0.5,
-                map: getTexture(),
-                transparent: true,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false
-            });
-            
+            const particlesMaterial = new THREE.PointsMaterial({ size: 0.5, map: getTexture(), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
             const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
             scene.add(particlesMesh);
 
-            // 7. INTERACTION VARIABLES
-            let mouseX = 0;
-            let mouseY = 0;
-            let targetX = 0;
-            let targetY = 0;
+            let mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
+            const windowHalfX = window.innerWidth / 2, windowHalfY = window.innerHeight / 2;
+            document.addEventListener('mousemove', (e) => { mouseX = (e.clientX - windowHalfX); mouseY = (e.clientY - windowHalfY); });
 
-            const windowHalfX = window.innerWidth / 2;
-            const windowHalfY = window.innerHeight / 2;
-
-            document.addEventListener('mousemove', (event) => {
-                mouseX = (event.clientX - windowHalfX);
-                mouseY = (event.clientY - windowHalfY);
-            });
-
-            // 8. ANIMATION LOOP
             const clock = new THREE.Clock();
-
             const animate = () => {
                 const elapsedTime = clock.getElapsedTime();
-
-                targetX = mouseX * 0.001;
-                targetY = mouseY * 0.001;
-
-                // Rotate Central Knot
-                torusKnot.rotation.y += 0.01;
-                torusKnot.rotation.z += 0.005;
-
-                // Rotate Rings independently
-                ring1.rotation.z += 0.002;
-                ring1.rotation.x = Math.sin(elapsedTime * 0.5) * 0.2;
-                
-                ring2.rotation.x += 0.002;
-                ring2.rotation.y += 0.002;
-
-                ring3.rotation.x -= 0.002;
-
-                // Rotate Outer Sphere slowly
-                outerSphere.rotation.y -= 0.001;
-
-                // Float the entire group gently
+                targetX = mouseX * 0.001; targetY = mouseY * 0.001;
+                torusKnot.rotation.y += 0.01; torusKnot.rotation.z += 0.005;
+                ring1.rotation.z += 0.002; ring1.rotation.x = Math.sin(elapsedTime * 0.5) * 0.2;
+                ring2.rotation.x += 0.002; ring2.rotation.y += 0.002;
                 coreGroup.position.y = Math.sin(elapsedTime * 0.5) * 0.5;
-
-                // Move lights slightly to create dynamic shadows
-                light1.position.x = 10 + Math.sin(elapsedTime) * 3;
-                light1.position.z = 10 + Math.cos(elapsedTime) * 3;
-
-                // Particle Rotation
                 particlesMesh.rotation.y = elapsedTime * 0.05;
-
-                // Smooth Camera/Scene Movement based on Mouse
                 coreGroup.rotation.y += 0.05 * (targetX - coreGroup.rotation.y);
                 coreGroup.rotation.x += 0.05 * (targetY - coreGroup.rotation.x);
-
                 renderer.render(scene, camera);
                 requestAnimationFrame(animate);
             };
-
             animate();
-
-            // Resize Handler
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
+            window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
         };
-
         initThreeJS();
     </script>
 </body>
