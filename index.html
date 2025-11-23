@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F - Code . X | Digital Future</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --secondary: #7000ff;
+            --bg-dark: #050505;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Space Grotesk', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        /* 3D Canvas Container */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: -1;
+            /* opacity: 0.6;  Removed to let the new lighting shine */
+        }
+
+        /* Glassmorphism */
+        .glass {
+            background: rgba(20, 20, 20, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .glass-strong {
+            background: rgba(5, 5, 5, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Glitch Effect on Hover */
+        .glitch-hover {
+            position: relative;
+        }
+        .glitch-hover::before, .glitch-hover::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-dark);
+        }
+        .glitch-hover:hover::before {
+            left: 2px;
+            text-shadow: -1px 0 #ff00c1;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim-1 2s infinite linear alternate-reverse;
+        }
+        .glitch-hover:hover::after {
+            left: -2px;
+            text-shadow: -1px 0 #00fff9;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim-2 3s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim-1 {
+            0% { clip: rect(30px, 9999px, 10px, 0); }
+            100% { clip: rect(70px, 9999px, 90px, 0); }
+        }
+        @keyframes glitch-anim-2 {
+            0% { clip: rect(10px, 9999px, 80px, 0); }
+            100% { clip: rect(90px, 9999px, 20px, 0); }
+        }
+
+        /* Neon Glow */
+        .neon-text {
+            text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+        }
+
+        /* Loading Screen */
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease;
+        }
+
+        /* Modal Styles */
+        .modal-open {
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-cyan-500 selection:text-black">
+
+    <!-- Loading Screen -->
+    <div id="loader">
+        <div class="font-mono text-cyan-400 text-xl animate-pulse">
+            INITIALIZING F - CODE . X SYSTEM...
+        </div>
+    </div>
+
+    <!-- 3D Background -->
+    <div id="canvas-container"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-strong transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#" class="text-2xl font-bold tracking-widest relative group" data-text="F-CODE.X">
+                <span class="text-cyan-400 font-mono">F</span> - CODE . X
+            </a>
+            
+            <div class="hidden md:flex space-x-8 text-sm font-mono tracking-wider">
+                <a href="#home" class="hover:text-cyan-400 transition-colors">/HOME</a>
+                <a href="#expertise" class="hover:text-cyan-400 transition-colors">/EXPERTISE</a>
+                <a href="#work" class="hover:text-cyan-400 transition-colors">/WORK</a>
+                <a href="#contact" class="text-cyan-400 border border-cyan-400 px-4 py-1 hover:bg-cyan-400 hover:text-black transition-all">INIT_CONTACT</a>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button class="md:hidden text-white" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+                <i data-lucide="menu"></i>
+            </button>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden glass border-t border-gray-800 p-4">
+            <div class="flex flex-col space-y-4 font-mono text-sm">
+                <a href="#home" class="block hover:text-cyan-400">/HOME</a>
+                <a href="#expertise" class="block hover:text-cyan-400">/EXPERTISE</a>
+                <a href="#work" class="block hover:text-cyan-400">/WORK</a>
+                <a href="#contact" class="block text-cyan-400">INIT_CONTACT</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="relative z-10 pt-20">
+        
+        <!-- Hero Section -->
+        <section id="home" class="min-h-screen flex items-center justify-center px-6 relative overflow-hidden">
+            <div class="max-w-7xl mx-auto w-full grid md:grid-cols-2 gap-12 items-center">
+                <div class="space-y-6 relative z-10">
+                    <!-- Updated Badge Text -->
+                    <div class="inline-block px-3 py-1 border border-cyan-500/30 rounded-full bg-cyan-500/10 backdrop-blur-sm">
+                        <span class="text-xs font-mono text-cyan-300">● WELCOME TO OUR UNIVERSE</span>
+                    </div>
+                    
+                    <h1 class="text-6xl md:text-8xl font-bold leading-tight glitch-hover" data-text="FUTURE DIGITAL ARCHITECTS">
+                        FUTURE <br/>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">DIGITAL</span> <br/>
+                        ARCHITECTS
+                    </h1>
+                    
+                    <p class="text-gray-300 text-lg md:text-xl max-w-lg font-light drop-shadow-md">
+                        We don't just write code. We engineer digital realities. 
+                        Merging aesthetics with high-performance logic.
+                    </p>
+                    
+                    <div class="flex flex-wrap gap-4 pt-4">
+                        <a href="#contact" class="bg-cyan-500 text-black px-8 py-4 font-bold hover:bg-white hover:scale-105 transition-all duration-300 font-mono shadow-[0_0_20px_rgba(0,242,255,0.4)]">
+                            START PROJECT ->
+                        </a>
+                        <a href="#work" class="border border-white/20 hover:border-cyan-400 px-8 py-4 backdrop-blur-sm hover:bg-white/5 transition-all duration-300 font-mono flex items-center gap-2">
+                            VIEW MODULES
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Spacer for 3D visual balance -->
+                <div class="hidden md:block"></div>
+            </div>
+
+            <!-- Scroll Indicator -->
+            <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce">
+                <i data-lucide="chevrons-down" class="text-cyan-500 w-8 h-8"></i>
+            </div>
+        </section>
+
+        <!-- Expertise Section -->
+        <section id="expertise" class="py-24 px-6 bg-gradient-to-b from-transparent via-black/90 to-black/95">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-end mb-16 border-b border-gray-800 pb-8">
+                    <div>
+                        <h2 class="text-4xl font-bold mb-2">CORE CAPABILITIES</h2>
+                        <p class="font-mono text-cyan-400 text-sm">/// SYSTEM_MODULES</p>
+                    </div>
+                    <p class="text-gray-400 max-w-md mt-4 md:mt-0 text-right">
+                        High-frequency solutions for complex digital environments.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Card 1 -->
+                    <div class="glass p-8 rounded-none border-l-4 border-cyan-500 hover:bg-white/5 transition-all duration-300 group hover:-translate-y-2">
+                        <div class="mb-6 p-4 bg-cyan-500/10 w-fit rounded-lg shadow-[0_0_15px_rgba(0,242,255,0.2)]">
+                            <i data-lucide="box" class="w-8 h-8 text-cyan-400"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 group-hover:text-cyan-400 transition-colors">3D WEBGL</h3>
+                        <p class="text-gray-400 leading-relaxed text-sm">
+                            Immersive browser experiences using Three.js and WebGL. Breaking the flat web barrier.
+                        </p>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div class="glass p-8 rounded-none border-l-4 border-purple-500 hover:bg-white/5 transition-all duration-300 group hover:-translate-y-2">
+                        <div class="mb-6 p-4 bg-purple-500/10 w-fit rounded-lg shadow-[0_0_15px_rgba(112,0,255,0.2)]">
+                            <i data-lucide="cpu" class="w-8 h-8 text-purple-400"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 group-hover:text-purple-400 transition-colors">AI INTEGRATION</h3>
+                        <p class="text-gray-400 leading-relaxed text-sm">
+                            Neural networks and LLM integration for intelligent, adaptive user interfaces.
+                        </p>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div class="glass p-8 rounded-none border-l-4 border-pink-500 hover:bg-white/5 transition-all duration-300 group hover:-translate-y-2">
+                        <div class="mb-6 p-4 bg-pink-500/10 w-fit rounded-lg shadow-[0_0_15px_rgba(236,72,153,0.2)]">
+                            <i data-lucide="smartphone" class="w-8 h-8 text-pink-400"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 group-hover:text-pink-400 transition-colors">HYBRID APPS</h3>
+                        <p class="text-gray-400 leading-relaxed text-sm">
+                            Cross-platform mobile architecture ensuring performance parity with native code.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats / Code Section -->
+        <section class="py-20 border-y border-gray-800 bg-black/50 relative backdrop-blur-sm">
+            <div class="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center font-mono">
+                <div>
+                    <div class="text-4xl font-bold text-white mb-2">98<span class="text-cyan-500">%</span></div>
+                    <div class="text-xs text-gray-500">UPTIME EFFICIENCY</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold text-white mb-2">240<span class="text-purple-500">+</span></div>
+                    <div class="text-xs text-gray-500">MODULES DEPLOYED</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold text-white mb-2">&lt;0.1<span class="text-pink-500">s</span></div>
+                    <div class="text-xs text-gray-500">LATENCY</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold text-white mb-2">Global</div>
+                    <div class="text-xs text-gray-500">NETWORK NODES</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section id="contact" class="py-32 px-6">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-5xl md:text-7xl font-bold mb-8">READY TO <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-600">UPGRADE?</span></h2>
+                <p class="text-xl text-gray-400 mb-12">Initialize collaboration sequence. We are listening.</p>
+                
+                <form id="contact-form" class="glass p-8 md:p-12 text-left max-w-2xl mx-auto space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block font-mono text-xs text-cyan-400 mb-2">IDENTIFIER / NAME</label>
+                            <input type="text" id="name" required class="w-full bg-black/40 border border-gray-700 p-3 text-white focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Enter ID">
+                        </div>
+                        <div>
+                            <label class="block font-mono text-xs text-cyan-400 mb-2">FREQUENCY / EMAIL</label>
+                            <input type="email" id="email" required class="w-full bg-black/40 border border-gray-700 p-3 text-white focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Enter Email">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block font-mono text-xs text-cyan-400 mb-2">DATA PACKET / MESSAGE</label>
+                        <textarea id="message" required rows="4" class="w-full bg-black/40 border border-gray-700 p-3 text-white focus:border-cyan-400 focus:outline-none transition-colors" placeholder="Transmission content..."></textarea>
+                    </div>
+                    <button type="submit" id="submit-btn" class="w-full bg-cyan-600/20 border border-cyan-500 text-cyan-400 py-4 font-mono font-bold hover:bg-cyan-500 hover:text-black transition-all duration-300 flex justify-center items-center group">
+                        <span id="btn-text">[ TRANSMIT DATA ]</span>
+                        <i data-lucide="send" id="btn-icon" class="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+                    </button>
+                    <!-- Status Message Area -->
+                    <div id="status-msg" class="text-center font-mono text-sm h-6"></div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="border-t border-gray-900 bg-black py-12 px-6">
+            <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <span class="text-2xl font-bold tracking-widest font-mono">F - CODE . X</span>
+                    <p class="text-gray-600 text-xs mt-2">EST. 2024 // SECTOR 7G</p>
+                    <div class="flex space-x-4 mt-2 text-[10px] font-mono text-gray-500">
+                        <button onclick="openLegal('privacy')" class="hover:text-cyan-400 transition-colors uppercase cursor-pointer">[ Privacy Protocol ]</button>
+                        <button onclick="openLegal('terms')" class="hover:text-cyan-400 transition-colors uppercase cursor-pointer">[ Terms of Ops ]</button>
+                    </div>
+                </div>
+                <div class="flex space-x-6 text-gray-500">
+                    <a href="https://github.com/omaairsk" target="_blank" class="hover:text-cyan-400 transition-colors"><i data-lucide="github"></i></a>
+                    <a href="https://x.com/itsmefardin" target="_blank" class="hover:text-cyan-400 transition-colors"><i data-lucide="twitter"></i></a>
+                    <a href="https://www.linkedin.com/in/iamfardinsk" target="_blank" class="hover:text-cyan-400 transition-colors"><i data-lucide="linkedin"></i></a>
+                </div>
+            </div>
+            <div class="text-center mt-8 text-gray-800 text-xs font-mono">
+                SYSTEM GENERATED. ALL RIGHTS RESERVED.
+            </div>
+        </footer>
+
+    </main>
+
+    <!-- Legal Modal Overlay -->
+    <div id="legal-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/90 backdrop-blur-md" onclick="closeLegal()"></div>
+        
+        <!-- Modal Content -->
+        <div class="relative glass-strong p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto border border-cyan-500/30 shadow-[0_0_50px_rgba(0,242,255,0.1)] transform transition-all duration-300 scale-95 opacity-0" id="legal-content-box">
+            <button onclick="closeLegal()" class="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors">
+                <i data-lucide="x"></i>
+            </button>
+            
+            <h2 id="modal-title" class="text-3xl font-bold mb-6 font-mono text-cyan-400 border-b border-gray-800 pb-4"></h2>
+            <div id="modal-body" class="text-gray-300 space-y-4 font-mono text-sm leading-relaxed"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // --- AUDIO SYSTEM (Sound Effects) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        const playUiSound = () => {
+            // Resume context if suspended (browser policy)
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            // Create a "Sci-Fi Blip" sound
+            oscillator.type = 'sine';
+            // Start frequency
+            oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); 
+            // Drop pitch quickly
+            oscillator.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+            
+            // Envelope (Volume)
+            gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime); // Start quiet
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1); // Fade out
+            
+            // Connect
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            // Play
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.1);
+        };
+
+        // Attach sound to all interactive elements
+        document.addEventListener('DOMContentLoaded', () => {
+            const interactiveElements = document.querySelectorAll('button, a, input, textarea');
+            interactiveElements.forEach(el => {
+                el.addEventListener('mousedown', playUiSound);
+            });
+        });
+
+
+        // --- LEGAL MODAL SYSTEM ---
+        const legalData = {
+            privacy: {
+                title: "PRIVACY_PROTOCOL_v1.0",
+                content: `
+                    <p class="text-cyan-200">// DATA_COLLECTION_INIT</p>
+                    <p>F - Code . X respects your digital footprint. We collect only the data you explicitly transmit via our communication modules (Name, Frequency/Email, Message Packets).</p>
+                    
+                    <br><p class="text-cyan-200">// DATA_USAGE</p>
+                    <p>Captured data is utilized solely for establishing communication uplinks and project collaboration. We do not share, sell, or decrypt your personal identifiers for third-party entities.</p>
+                    
+                    <br><p class="text-cyan-200">// COOKIE_POLICY</p>
+                    <p>This system uses local storage primarily for performance optimization (3D asset caching) and session continuity.</p>
+                `
+            },
+            terms: {
+                title: "TERMS_OF_OPERATIONS",
+                content: `
+                    <p class="text-cyan-200">// SYSTEM_ACCESS</p>
+                    <p>By accessing F - Code . X, you agree to navigate our digital construct responsibly. Any attempt to inject malicious code or disrupt the 3D visualizer will result in an IP ban.</p>
+                    
+                    <br><p class="text-cyan-200">// INTELLECTUAL_PROPERTY</p>
+                    <p>All visual assets, code architectures, and "F-Code" branding are proprietary. Unauthorized replication of this digital environment is prohibited.</p>
+                    
+                    <br><p class="text-cyan-200">// LIABILITY_LIMITATION</p>
+                    <p>F - Code . X is not liable for GPU overheating caused by excessive admiration of our particle systems.</p>
+                `
+            }
+        };
+
+        const modal = document.getElementById('legal-modal');
+        const contentBox = document.getElementById('legal-content-box');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+
+        window.openLegal = (type) => {
+            const data = legalData[type];
+            if(!data) return;
+
+            modalTitle.innerText = data.title;
+            modalBody.innerHTML = data.content;
+            
+            modal.classList.remove('hidden');
+            // Small delay for animation
+            setTimeout(() => {
+                contentBox.classList.remove('scale-95', 'opacity-0');
+                contentBox.classList.add('scale-100', 'opacity-100');
+            }, 10);
+            
+            playUiSound(); // Play sound on open
+        };
+
+        window.closeLegal = () => {
+            contentBox.classList.remove('scale-100', 'opacity-100');
+            contentBox.classList.add('scale-95', 'opacity-0');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+            
+            playUiSound(); // Play sound on close
+        };
+
+        // Loader & System Voice Interaction
+        window.addEventListener('load', () => {
+            const loader = document.getElementById('loader');
+            const loaderText = loader.querySelector('div');
+
+            // Browser audio policies require user interaction to play sound.
+            // We wait a moment, then prompt the user to click to start the experience.
+            setTimeout(() => {
+                loaderText.innerHTML = "SYSTEM READY. <br/><span class='text-sm text-white/50 block mt-4'>[ CLICK TO ENTER UNIVERSE ]</span>";
+                loaderText.classList.remove('animate-pulse'); // Stop the loading pulse
+                loader.style.cursor = "pointer"; // Show pointer cursor
+                
+                // Add a subtle hover effect to the text
+                loaderText.classList.add('transition-transform', 'duration-300', 'hover:scale-105');
+            }, 1500);
+
+            const activateSystem = () => {
+                // 1. Play "Jarvis-like" Speech
+                if ('speechSynthesis' in window) {
+                    // Updated Speech Text
+                    const utterance = new SpeechSynthesisUtterance("Website loaded, sir. Welcome to our universe.");
+                    utterance.rate = 0.9;  // Slightly slower and more deliberate
+                    utterance.pitch = 0.8; // Slightly deeper tone
+                    utterance.volume = 1.0;
+                    
+                    // Try to select a better voice if available (browser dependent)
+                    const voices = window.speechSynthesis.getVoices();
+                    const preferredVoice = voices.find(v => v.name.includes('Google US English') || v.name.includes('Samantha'));
+                    if (preferredVoice) utterance.voice = preferredVoice;
+
+                    window.speechSynthesis.speak(utterance);
+                }
+
+                // 2. Fade Out Loader
+                loader.style.opacity = '0';
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                }, 500);
+            };
+
+            // Trigger system activation on click
+            loader.addEventListener('click', activateSystem, { once: true });
+        });
+
+        // --- ENHANCED 3D ANIMATION ENGINE ---
+        const initThreeJS = () => {
+            const container = document.getElementById('canvas-container');
+            
+            // 1. SCENE & FOG
+            const scene = new THREE.Scene();
+            // Dark fog for infinite depth illusion
+            scene.fog = new THREE.FogExp2(0x020202, 0.002); 
+
+            // 2. CAMERA
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 25;
+            camera.position.y = 2;
+
+            // 3. RENDERER (With Shadow Map enabled)
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // 4. LIGHTING (Cinematic Setup)
+            // Ambient light for base visibility
+            const ambientLight = new THREE.AmbientLight(0x222222);
+            scene.add(ambientLight);
+
+            // Main Key Light (Cyan/Blue)
+            const light1 = new THREE.PointLight(0x00f2ff, 2, 100);
+            light1.position.set(10, 10, 10);
+            light1.castShadow = true;
+            scene.add(light1);
+
+            // Rim Light (Purple)
+            const light2 = new THREE.PointLight(0x7000ff, 2, 100);
+            light2.position.set(-10, -10, 10);
+            scene.add(light2);
+
+            // Bottom Fill Light (Pinkish)
+            const light3 = new THREE.PointLight(0xff00aa, 1, 50);
+            light3.position.set(0, -10, 5);
+            scene.add(light3);
+
+            // 5. MATERIALS & OBJECTS
+            // Group to hold the "Cyber Core"
+            const coreGroup = new THREE.Group();
+            scene.add(coreGroup);
+
+            // A. Central Metallic Torus Knot (The "Brain")
+            const torusKnotGeo = new THREE.TorusKnotGeometry(3.5, 1, 100, 16);
+            const metalMaterial = new THREE.MeshStandardMaterial({
+                color: 0x111111,
+                metalness: 0.9,
+                roughness: 0.2,
+                emissive: 0x001133,
+                emissiveIntensity: 0.2,
+                wireframe: false
+            });
+            const torusKnot = new THREE.Mesh(torusKnotGeo, metalMaterial);
+            torusKnot.castShadow = true;
+            torusKnot.receiveShadow = true;
+            coreGroup.add(torusKnot);
+
+            // B. Spinning Wireframe Rings (Data Streams)
+            const ringGeo = new THREE.TorusGeometry(8, 0.05, 16, 100);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f2ff, transparent: true, opacity: 0.3 });
+            
+            const ring1 = new THREE.Mesh(ringGeo, ringMat);
+            const ring2 = new THREE.Mesh(ringGeo, ringMat);
+            const ring3 = new THREE.Mesh(ringGeo, ringMat);
+
+            ring1.rotation.x = Math.PI / 2;
+            ring2.rotation.y = Math.PI / 4;
+            
+            coreGroup.add(ring1);
+            coreGroup.add(ring2);
+            coreGroup.add(ring3);
+
+            // C. Outer Geodesic Sphere (The Network)
+            const outerGeo = new THREE.IcosahedronGeometry(12, 1);
+            const outerMat = new THREE.MeshStandardMaterial({
+                color: 0x333333,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.1,
+                roughness: 0.5,
+                metalness: 0.8
+            });
+            const outerSphere = new THREE.Mesh(outerGeo, outerMat);
+            coreGroup.add(outerSphere);
+
+            // 6. FLOATING PARTICLES (Starfield/Data bits)
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = 1500;
+            const posArray = new Float32Array(particlesCount * 3);
+            
+            for(let i = 0; i < particlesCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 100; // Wider spread
+            }
+            
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            
+            // Create a soft glow texture for particles
+            const getTexture = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 32;
+                canvas.height = 32;
+                const ctx = canvas.getContext('2d');
+                const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+                gradient.addColorStop(0.2, 'rgba(0, 242, 255, 1)');
+                gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
+                gradient.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 32, 32);
+                const texture = new THREE.Texture(canvas);
+                texture.needsUpdate = true;
+                return texture;
+            };
+
+            const particlesMaterial = new THREE.PointsMaterial({
+                size: 0.5,
+                map: getTexture(),
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+            
+            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
+
+            // 7. INTERACTION VARIABLES
+            let mouseX = 0;
+            let mouseY = 0;
+            let targetX = 0;
+            let targetY = 0;
+
+            const windowHalfX = window.innerWidth / 2;
+            const windowHalfY = window.innerHeight / 2;
+
+            document.addEventListener('mousemove', (event) => {
+                mouseX = (event.clientX - windowHalfX);
+                mouseY = (event.clientY - windowHalfY);
+            });
+
+            // 8. ANIMATION LOOP
+            const clock = new THREE.Clock();
+
+            const animate = () => {
+                const elapsedTime = clock.getElapsedTime();
+
+                targetX = mouseX * 0.001;
+                targetY = mouseY * 0.001;
+
+                // Rotate Central Knot
+                torusKnot.rotation.y += 0.01;
+                torusKnot.rotation.z += 0.005;
+
+                // Rotate Rings independently
+                ring1.rotation.z += 0.002;
+                ring1.rotation.x = Math.sin(elapsedTime * 0.5) * 0.2;
+                
+                ring2.rotation.x += 0.002;
+                ring2.rotation.y += 0.002;
+
+                ring3.rotation.x -= 0.002;
+
+                // Rotate Outer Sphere slowly
+                outerSphere.rotation.y -= 0.001;
+
+                // Float the entire group gently
+                coreGroup.position.y = Math.sin(elapsedTime * 0.5) * 0.5;
+
+                // Move lights slightly to create dynamic shadows
+                light1.position.x = 10 + Math.sin(elapsedTime) * 3;
+                light1.position.z = 10 + Math.cos(elapsedTime) * 3;
+
+                // Particle Rotation
+                particlesMesh.rotation.y = elapsedTime * 0.05;
+
+                // Smooth Camera/Scene Movement based on Mouse
+                coreGroup.rotation.y += 0.05 * (targetX - coreGroup.rotation.y);
+                coreGroup.rotation.x += 0.05 * (targetY - coreGroup.rotation.x);
+
+                renderer.render(scene, camera);
+                requestAnimationFrame(animate);
+            };
+
+            animate();
+
+            // Resize Handler
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        };
+
+        initThreeJS();
+    </script>
+</body>
+</html>
