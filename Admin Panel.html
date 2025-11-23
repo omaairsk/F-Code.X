@@ -273,19 +273,49 @@
         import { getAuth, signInAnonymously, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-        // 1. Initialize Firebase
-        const firebaseConfig = JSON.parse(__firebase_config);
+        // -----------------------------------------------------------
+        // CONFIGURATION SECTION (CRITICAL FOR GITHUB HOSTING)
+        // -----------------------------------------------------------
+        
+        let firebaseConfig;
+        let appId = 'default-app-id'; // You can change this to your app name if you want
+
+        // Check if running in AI Environment or External (GitHub)
+        if (typeof __firebase_config !== 'undefined') {
+            // Internal use
+            firebaseConfig = JSON.parse(__firebase_config);
+            if (typeof __app_id !== 'undefined') appId = __app_id;
+        } else {
+            // EXTERNAL USE: PASTE YOUR CONFIG HERE
+            // Go to Firebase Console > Project Settings > General > Your Apps > SDK Setup/Config
+            firebaseConfig = {
+                apiKey: "PASTE_YOUR_API_KEY_HERE",
+                authDomain: "PASTE_YOUR_PROJECT_ID.firebaseapp.com",
+                projectId: "PASTE_YOUR_PROJECT_ID",
+                storageBucket: "PASTE_YOUR_PROJECT_ID.firebasestorage.app",
+                messagingSenderId: "PASTE_YOUR_MESSAGING_SENDER_ID",
+                appId: "PASTE_YOUR_APP_ID"
+            };
+        }
+
+        // Initialize
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        // 2. Auth Sequence (Silent)
+        // 2. Auth Sequence
         async function initAuth() {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    // This creates a user session so you can read the database
+                    await signInAnonymously(auth);
+                }
+                console.log("System Authenticated");
+            } catch (error) {
+                console.error("Auth Failure:", error);
+                alert("Authentication Failed. Did you Enable 'Anonymous' Auth in Firebase Console?");
             }
         }
         initAuth();
@@ -296,6 +326,7 @@
             const code = document.getElementById('access-code').value;
             playSound('click');
             
+            // NOTE: This code 'admin' is just client-side security (weak).
             if (code === 'admin') {
                 // Success
                 document.getElementById('login-screen').style.display = 'none';
@@ -315,8 +346,7 @@
 
         function startDataListener() {
             const user = auth.currentUser;
-            if (!user) return; // Should be auth'd by now
-
+            
             // Read from the PUBLIC data path where index.html writes
             const q = collection(db, 'artifacts', appId, 'public', 'data', 'contact_messages');
 
@@ -339,7 +369,11 @@
                 updateStats();
             }, (error) => {
                 console.error("Data Uplink Failed:", error);
-                document.getElementById('messages-container').innerHTML = `<div class="text-red-500 font-mono">ERROR: SIGNAL LOST. ${error.message}</div>`;
+                // If it fails here, it usually means permission denied or bad config
+                document.getElementById('messages-container').innerHTML = `<div class="text-red-500 font-mono text-center">
+                    ERROR: SIGNAL LOST.<br>
+                    ${error.code === 'permission-denied' ? 'Check Firestore Rules (Allow read/write)' : error.message}
+                </div>`;
             });
         }
 
