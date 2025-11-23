@@ -326,8 +326,8 @@
             const code = document.getElementById('access-code').value;
             playSound('click');
             
-            // NOTE: This code 'admin' is just client-side security (weak).
-            if (code === 'admin') {
+            // NOTE: This code 'admin@041500' is just client-side security (weak).
+            if (code === 'admin@041500') {
                 // Success
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('dashboard').classList.remove('hidden');
