@@ -530,16 +530,39 @@
 
     <!-- Scripts -->
     <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-        import { getAuth, signInAnonymously, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-        import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, updateDoc, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+        // Updated imports to v12.6.0 as requested
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js';
+        import { getAnalytics } from 'https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js';
+        import { getAuth, signInAnonymously, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js';
+        import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, updateDoc, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js';
 
         // 1. Initialize Firebase
-        const firebaseConfig = JSON.parse(__firebase_config);
+        let firebaseConfig;
+        let appId;
+
+        // Smart Switch: Detects if running in Chat Preview or on your Real Website
+        if (typeof __firebase_config !== 'undefined') {
+            // Internal Chat Preview Mode (Uses temporary sandbox credentials)
+            firebaseConfig = JSON.parse(__firebase_config);
+            appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        } else {
+            // Real Website Mode (GitHub/Custom Domain) - USING YOUR CREDENTIALS
+            firebaseConfig = {
+                apiKey: "AIzaSyBLRsqK5PRC1yco_YuVe5k3jQpw__vrJYI",
+                authDomain: "f-codex.firebaseapp.com",
+                projectId: "f-codex",
+                storageBucket: "f-codex.firebasestorage.app",
+                messagingSenderId: "779917694226",
+                appId: "1:779917694226:web:4a1536008480072c36cfcb",
+                measurementId: "G-ELPE5VK023"
+            };
+            appId = 'default-app-id'; // Maintains database structure consistency
+        }
+
         const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app); // Analytics Initialized
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
         // 2. Auth Sequence
         async function initAuth() {
